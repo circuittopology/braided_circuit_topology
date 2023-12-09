@@ -1,0 +1,66 @@
+variable 		iterator loop 1000
+
+units		lj
+comm_modify cutoff 5.0
+
+variable rcut equal 2.0^(1.0/6.0)
+
+atom_style	bond
+special_bonds   fene
+bond_style      fene
+pair_style	lj/cut ${rcut}
+
+read_data	ppa_ic_${iterator}.data
+
+neighbor	1.0 bin
+neigh_modify	every 1 delay 1
+neigh_modify    one 1000
+
+bond_coeff	* 30.0 1.5 1.0 0.0
+
+pair_modify	shift yes
+pair_coeff	* * 1.0 1.0 ${rcut}
+
+change_box	all triclinic
+
+thermo      1
+timestep	0.1
+
+
+fix 1 all nve
+
+
+group end1 id 10:40:10
+group end2 id 1:31:10
+
+fix freeze1 end1 setforce 0.0 0.0 0.0
+fix freeze2 end2 setforce 0.0 0.0 0.0
+
+pair_style      lj/cut/ppa ${rcut}
+pair_modify	shift yes
+pair_coeff	1 1 1.0 1.0 ${rcut}
+bond_style      fene/ppa
+bond_coeff	1 500000000 1.5 1.0 1.0
+
+compute p all ppa
+variable Z equal c_p[1]
+variable a equal c_p[2]
+variable R2 equal c_p[3]
+variable L equal c_p[4]
+thermo_style custom step v_Z v_a v_R2 v_L
+
+neigh_modify	delay 0 every 1 check yes
+minimize	1.0e-25 1.0e-25 10000000 10000000
+
+dump d1 all custom 100000 dump.ppa_${iterator}.lammpstrj id mol x y z ix iy iz
+dump_modify d1 sort id first yes
+
+run 0
+
+write_data ppa.data
+
+clear 
+
+next iterator 
+
+jump main_batch.ppa

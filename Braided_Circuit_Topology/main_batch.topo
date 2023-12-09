@@ -1,0 +1,78 @@
+#######################################################################
+##                                                                   ##
+##                 							                         ##
+##                         Dec 2022                                  ##
+##                                                                   ##
+#######################################################################
+variable 		iterator loop 1000
+
+units		    lj
+boundary	    p p p
+atom_style	    molecular
+read_data	    chains_ic.data
+
+variable        root index Chain90
+variable        Nf equal 10000
+variable        Ne equal 100
+variable        Nr equal ${Nf}/${Ne}
+variable        Nrestart equal 10000000
+
+variable		RandGen equal 101*${iterator}
+#variable    	Nrun_NVT equal 1500000
+variable    	Nrun_NVT equal 20000
+variable        Ndump equal 20000
+
+variable		Pres equal 0.01
+variable		epsilon equal 1
+#variable		bending_stiff equal 15.0
+
+########################((General information))#######################
+
+
+#dump           total all xyz ${Ndump} dump.equi.xyz
+#dump_modify 	total flush yes
+
+dump			t1 all custom ${Ndump} Trj_${iterator}.lammpstrj id mol type xu yu zu
+dump_modify		t1 sort id
+
+compute			Gr all gyration
+variable		RG equal c_Gr
+
+fix             1 all langevin 1. 1.0 1.05 ${RandGen} tally yes
+fix             2 all nve
+######################### Start of Loop #####################################
+velocity		all create 1.0 426421 rot yes dist gaussian
+
+variable        Diss_Heat equal f_1
+
+pair_style		lj/cut 3.0
+pair_coeff		1 1 ${epsilon} 1.0
+
+pair_modify	shift yes
+special_bonds   fene
+
+bond_style		fene
+bond_coeff		1 30.0 1.5 1.0 1.0
+
+angle_style     cosine
+angle_coeff     1 ${bending_stiff}
+
+
+neighbor		1.0 bin
+neigh_modify    every 1 delay 10 check yes
+
+restart         ${Nrestart} restart.${root}
+
+thermo_style	custom step temp press density pe epair ebond eangle edihed v_Diss_Heat ke etotal c_Gr
+thermo			1000
+
+fix             extra1 all print ${Nrun_NVT} "${RG}" screen no title "" append RG_${bending_stiff}.txt
+timestep		0.01
+
+run				${Nrun_NVT}
+
+clear 
+
+next iterator 
+
+jump main_batch.topo
