@@ -18,4 +18,4 @@ First compile the C programs by running the Makefile
   <li> Do a Braid Analysis by running the Matlab script 'entanglement.m'. WARNING: this requires that the BraidLab package is installed and that the function 'data_to_braid.m' is in the Matlab PATH. </li>
 </ol>
 
-To facilitate use and to allow for the systematic scanning of a stiffness range $[\kappa_-, \kappa_+]$, the BASH script can be run. Make sure to change the number of runs/iterations per stiffness value in the script, as well as in main.topo, main.ppa, reshape.c and CT_analysis_batch.c, and then recompile using the Makefile.
+To facilitate use and to allow for the systematic scanning of a stiffness range, the BASH script can be run. Make sure to change the number of runs/iterations per stiffness value in the script, as well as in main.topo, main.ppa, reshape.c and CT_analysis_batch.c, and then recompile using the Makefile.
